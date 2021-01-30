@@ -64,6 +64,8 @@ class PublishCogs(commands.Cog):
         await ctx.author.send(f"Hey {ctx.author.name}, let's get started.")
         await asyncio.sleep(1)
         await ctx.author.send("What is the cog that you are wanting to publish today? Please use CamelCase.")
+      else:
+        return await ctx.send(f"Okay {ctx.author.name}, I've canceled the publishing")
     except discord.Forbidden:
       return await ctx.send("I am not able to DM you.")
     
