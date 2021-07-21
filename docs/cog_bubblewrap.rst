@@ -53,15 +53,8 @@ bubblewrap
 
 **Description**
 
-This command will return 49 'bubbles' (7x7). These 'bubbles' are actually just the word 
+This command will return 49 'bubbles' (7x7). These 'bubbles' are actually just the word
 'pop', in spoilers. When you click on these spoilers, the word ``pop`` appears.
-
-----------------------
-Additional Information
-----------------------
-
-This cog has been vetted by the Red-DiscordBot QA team as approved.
-For inquiries, see to the contact options below.
 
 ---------------
 Receive Support

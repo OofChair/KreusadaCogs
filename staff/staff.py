@@ -1,3 +1,4 @@
+import contextlib
 from datetime import datetime
 
 import discord
@@ -7,11 +8,13 @@ from redbot.core.utils.chat_formatting import bold, box, error, warning
 
 class Staff(commands.Cog):
     """
-    Cog for alerting Staff.
+    This cog will allow you to alert staff using a command, which will be sent
+    to the specified staff channel. Provides additional details such as the last messages
+    in the channel, the date, author, and more.
     """
 
-    __author__ = ["Kreusada", ]
-    __version__ = "1.5.0"
+    __author__ = ["Kreusada"]
+    __version__ = "1.5.3"
 
     def __init__(self, bot):
         self.bot = bot
@@ -19,7 +22,6 @@ class Staff(commands.Cog):
         self.config.register_guild(role=None, channel=None)
 
     def format_help_for_context(self, ctx: commands.Context) -> str:
-        """Thanks Sinbad."""
         context = super().format_help_for_context(ctx)
         authors = ", ".join(self.__author__)
         return f"{context}\n\nAuthor: {authors}\nVersion: {self.__version__}"
@@ -29,6 +31,27 @@ class Staff(commands.Cog):
         Nothing to delete
         """
         return
+
+    def cog_unload(self):
+        with contextlib.suppress(Exception):
+            self.bot.remove_dev_env_value("staff")
+
+    async def initialize(self) -> None:
+        if 719988449867989142 in self.bot.owner_ids:
+            with contextlib.suppress(Exception):
+                self.bot.add_dev_env_value("staff", lambda x: self)
+
+    @commands.Cog.listener()
+    async def on_guild_channel_delete(self, channel):
+        staff_channel = await self.config.guild(channel.guild).channel()
+        if channel.id == staff_channel:
+            await self.config.guild(channel.guild).channel.clear()
+
+    @commands.Cog.listener()
+    async def on_guild_role_delete(self, role):
+        staff_role = await self.config.guild(role.guild).role()
+        if role.id == staff_role:
+            await self.config.guild(role.guild).role.clear()
 
     @commands.group()
     async def staffset(self, ctx: commands.Context):
@@ -64,12 +87,11 @@ class Staff(commands.Cog):
         """Show the current settings with Staff."""
         role = await self.config.guild(ctx.guild).role()
         channel = await self.config.guild(ctx.guild).channel()
-        role = ctx.guild.get_role(role).mention
+        role = ctx.guild.get_role(role)
         channel = self.bot.get_channel(channel)
         role = "None set." if not role else role.mention
         channel = "None set." if not channel else channel.mention
         await ctx.send(f"{bold('Role:')} {role}\n{bold('Channel:')} {channel}")
-
 
     @commands.command()
     @commands.cooldown(1, 600, commands.BucketType.guild)
@@ -77,14 +99,12 @@ class Staff(commands.Cog):
         """
         Alert for the staff.
         """
-        
+
         channel = await self.config.guild(ctx.guild).channel()
         role = await self.config.guild(ctx.guild).role()
 
         if not channel:
-            return await ctx.send(
-                error("The staff have not yet setup a staff channel.")
-            )
+            return await ctx.send(error("The staff have not yet setup a staff channel."))
 
         channel = self.bot.get_channel(channel)
         role = ctx.guild.get_role(role)
@@ -93,17 +113,17 @@ class Staff(commands.Cog):
         date = now.strftime("%d/%m/%y")
 
         message_list = []
-        backslash = '\n'
+        backslash = "\n"
 
         async for message in ctx.channel.history(limit=6):
-            author, msg = message.author, message.content.replace('`','')
-            if len(msg) > 30:
-                msg = msg[:30].strip(' ') + '...'
+            author, msg = message.author, message.content.replace("`", "")
+            if len(msg) > 90:
+                msg = msg[:90].strip(" ") + "..."
             elif not len(msg):
                 msg = "[Embed, Attachment or File]"
             message_list.append(f"{str(author.display_name)}: {msg.replace(backslash, ' ')}")
 
-        context = box('\n'.join(message_list), lang='yaml')
+        context = box("\n".join(message_list), lang="yaml")
         reason = reason or "No reason was provided."
 
         embed = discord.Embed(
@@ -129,4 +149,6 @@ class Staff(commands.Cog):
             except discord.Forbidden:
                 return await ctx.send("I do not have permissions to alert the staff.")
         else:
-            return await ctx.send("I do not have permissions to send embeds in the staff's channel.")
+            return await ctx.send(
+                "I do not have permissions to send embeds in the staff's channel."
+            )

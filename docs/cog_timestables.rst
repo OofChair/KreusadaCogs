@@ -151,9 +151,9 @@ Toggles whether time is recorded when you play timestables.
 
 .. _timestables-command-tt-timeout:
 
-"""""""
+""""""""""
 tt timeout
-"""""""
+""""""""""
 
 **Syntax**:
 
@@ -168,13 +168,6 @@ Sets how long you have to answer each question.
 **Arguments**
 
 * ``<seconds>``: The length of time per question in seconds.
-
-----------------------
-Additional Information
-----------------------
-
-This cog has been vetted by the Red-DiscordBot QA team as approved.
-For inquiries, see to the contact options below.
 
 ---------------
 Receive Support

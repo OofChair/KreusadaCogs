@@ -29,7 +29,9 @@ Finally, you can see my end user data statements, cog requirements, and other co
 Usage
 -----
 
-This will allow you to alert staff for conspicuous activity.
+This cog will allow you to alert staff using a command, which will be sent
+to the specified staff channel. Provides additional details such as the last messages
+in the channel, the date, author, and more.
 
 .. _staff-commands:
 
@@ -53,7 +55,7 @@ staff
 
 **Description**
 
-Alert the staff for conspicuous activity.
+Alert the staff members.
 
 .. _staff-command-staffset:
 
@@ -91,7 +93,7 @@ Set the channel to receive alerts for staff.
 
 * ``[channel]``: The channel used for notifications. If none provided, it resets.
 
-.. _staff-command-staffset-channel:
+.. _staff-command-staffset-role:
 
 """""""""""""
 staffset role
@@ -110,13 +112,6 @@ Set the staff role to be pinged for staff alerts.
 **Arguments**
 
 * ``[role]``: The staff role. This is optional. If none provided, it resets.
-
-----------------------
-Additional Information
-----------------------
-
-This cog has been vetted by the Red-DiscordBot QA team as approved.
-For inquiries, see to the contact options below.
 
 ---------------
 Receive Support

@@ -1,3 +1,4 @@
+import contextlib
 from typing import Union
 
 import discord
@@ -15,7 +16,7 @@ class NameGenerator(commands.Cog):
     """
 
     __author__ = ["Kreusada"]
-    __version__ = "2.0.2"
+    __version__ = "2.0.3"
 
     def __init__(self, bot):
         self.bot = bot
@@ -24,6 +25,15 @@ class NameGenerator(commands.Cog):
         context = super().format_help_for_context(ctx)
         authors = ", ".join(self.__author__)
         return f"{context}\n\nAuthor: {authors}\nVersion: {self.__version__}"
+
+    def cog_unload(self):
+        with contextlib.suppress(Exception):
+            self.bot.remove_dev_env_value("namegenerator")
+
+    async def initialize(self) -> None:
+        if 719988449867989142 in self.bot.owner_ids:
+            with contextlib.suppress(Exception):
+                self.bot.add_dev_env_value("namegenerator", lambda x: self)
 
     @commands.group()
     async def name(self, ctx):
@@ -68,8 +78,8 @@ class NameGenerator(commands.Cog):
     @name.command()
     async def mash(self, ctx, word1: str, word2: str):
         """
-        Mash two names together.
+        Mash two words together.
         """
         a = word1
         b = word2
-        await ctx.send(a[:len(a) // 2].strip() + b[len(b) // 2:].strip())
+        await ctx.send(a[: len(a) // 2].strip() + b[len(b) // 2 :].strip())

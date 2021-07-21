@@ -16,7 +16,7 @@ class ServerBlock(commands.Cog):
     """
 
     __author__ = ["Kreusada"]
-    __version__ = "0.3.0"
+    __version__ = "0.3.1"
 
     def __init__(self, bot):
         self.bot = bot
@@ -24,7 +24,6 @@ class ServerBlock(commands.Cog):
         self.config.register_global(blacklist=[])
 
     def format_help_for_context(self, ctx: commands.Context) -> str:
-        """Thanks Sinbad."""
         context = super().format_help_for_context(ctx)
         authors = ", ".join(self.__author__)
         return f"{context}\n\nAuthor: {authors}\nVersion: {self.__version__}"
@@ -32,7 +31,16 @@ class ServerBlock(commands.Cog):
     async def red_delete_data_for_user(self, **kwargs):
         """Nothing to delete"""
         return
-        
+
+    def cog_unload(self):
+        with contextlib.suppress(Exception):
+            self.bot.remove_dev_env_value("serverblock")
+
+    async def initialize(self) -> None:
+        if 719988449867989142 in self.bot.owner_ids:
+            with contextlib.suppress(Exception):
+                self.bot.add_dev_env_value("serverblock", lambda x: self)
+
     @commands.is_owner()
     @commands.group(aliases=["serverblacklist", "serverblocklist"])
     async def sbl(self, ctx):
@@ -89,18 +97,20 @@ class ServerBlock(commands.Cog):
         if not b:
             return await ctx.send("There are no blocklisted servers.")
         if len(b) == 1:
-            return await ctx.send(box(title + ': ' + str(b[0]), lang='yaml'))
-        await ctx.send(box(f'{title}s:' + '\n\n' + "\n".join(f"\t{x}" for x in b), lang='yaml'))
+            return await ctx.send(box(title + ": " + str(b[0]), lang="yaml"))
+        await ctx.send(box(f"{title}s:" + "\n\n" + "\n".join(f"\t{x}" for x in b), lang="yaml"))
 
     @sbl.command()
     async def clear(self, ctx):
         """Clears the server blocklist."""
         blacklist = await self.config.blacklist()
-        s = 's' if len(blacklist) > 1 else ''
-        are = 'are' if len(blacklist) > 1 else 'is'
+        s = "s" if len(blacklist) > 1 else ""
+        are = "are" if len(blacklist) > 1 else "is"
         if not blacklist:
             return await ctx.send("There are no servers on the server blocklist.")
-        await ctx.send(f"There {are} currently {len(blacklist)} server{s} on the blocklist. Are you sure? (yes/no)")
+        await ctx.send(
+            f"There {are} currently {len(blacklist)} server{s} on the blocklist. Are you sure? (yes/no)"
+        )
         try:
             pred = MessagePredicate.yes_or_no(ctx, user=ctx.author)
             msg = await ctx.bot.wait_for("message", check=pred, timeout=60)

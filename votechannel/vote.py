@@ -1,26 +1,4 @@
-"""
-MIT License
-
-Copyright (c) 2021 kreusada
-
-Permission is hereby granted, free of charge, to any person obtaining a copy
-of this software and associated documentation files (the "Software"), to deal
-in the Software without restriction, including without limitation the rights
-to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
-copies of the Software, and to permit persons to whom the Software is
-furnished to do so, subject to the following conditions:
-
-The above copyright notice and this permission notice shall be included in all
-copies or substantial portions of the Software.
-
-THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
-IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
-AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
-OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
-SOFTWARE.
-"""
+import contextlib
 
 import discord
 from redbot.core import Config, commands
@@ -35,8 +13,8 @@ class VoteChannel(commands.Cog):
     Designate a channel(s) to have vote reactions on each post.
     """
 
-    __author__ = ["Kreusada", ]
-    __version__ = "1.1.0"
+    __author__ = ["Kreusada"]
+    __version__ = "1.1.1"
 
     def __init__(self, bot):
         self.bot = bot
@@ -49,7 +27,6 @@ class VoteChannel(commands.Cog):
         )
 
     def format_help_for_context(self, ctx: commands.Context) -> str:
-        """Thanks Sinbad."""
         context = super().format_help_for_context(ctx)
         authors = ", ".join(self.__author__)
         return f"{context}\n\nAuthor: {authors}\nVersion: {self.__version__}"
@@ -59,6 +36,15 @@ class VoteChannel(commands.Cog):
         Nothing to delete
         """
         return
+
+    def cog_unload(self):
+        with contextlib.suppress(Exception):
+            self.bot.remove_dev_env_value("votechannel")
+
+    async def initialize(self) -> None:
+        if 719988449867989142 in self.bot.owner_ids:
+            with contextlib.suppress(Exception):
+                self.bot.add_dev_env_value("votechannel", lambda x: self)
 
     @commands.group()
     async def vote(self, ctx):
@@ -170,23 +156,20 @@ class VoteChannel(commands.Cog):
         try:
             await message.add_reaction(UP)
             await message.add_reaction(DOWN)
-        #### Seeing as we've allowed bot's to react to themselves, 
+        #### Seeing as we've allowed bot's to react to themselves,
         #### we now need to disable the exceptions on themselves to nullify any spam.
         except discord.Forbidden:
-            if (
-                message.author.bot
-            ):  
-                pass  
-            else: 
-                return await message.channel.send(
-                    "I am missing permissions to add reactions to the messages here."
+            if not message.author.bot:
+                msg = (
+                    f"{message.author.mention} Looks like I cannot add reactions to your message. "
                 )
+                if not message.channel.permissions_for(message.guild.me).add_reactions:
+                    msg += "I do not have permissions to add reactions here."
+                else:
+                    msg += "You most likely have blocked me."
+                return await message.channel.send(msg, delete_after=5)
         except discord.HTTPException:
-            if (
-                message.author.bot
-            ): 
-                pass  
-            else: 
+            if not message.author.bot:
                 return await message.channel.send(
-                    "You did not enter a valid emoji in the setup."
+                    "You did not enter a valid emoji in the setup.", delete_after=5
                 )

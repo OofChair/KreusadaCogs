@@ -29,7 +29,7 @@ Finally, you can see my end user data statements, cog requirements, and other co
 Usage
 -----
 
-This cog is going to return spoilers with ``pop`` inside them, so that you can metaphorically pop bubblewrap!
+Place text inside of codeblocks.
 
 .. _codify-commands:
 
@@ -39,17 +39,17 @@ Commands
 
 Here's a list of all commands available for this cog.
 
-.. _codify-command-codify:
+.. _codify-command-codify-frommsg:
 
-^^^^^^
-codify
-^^^^^^
+^^^^^^^^^^^^^^
+codify frommsg
+^^^^^^^^^^^^^^
 
 **Syntax**
 
 .. code-block:: ini
 
-    [p]codify <message_id> [language=python] [escape_markdown=False]
+    [p]codify <message_id> [language=python]
 
 **Description**
 
@@ -59,14 +59,27 @@ Get a message and wrap it in a codeblock.
 
 * ``<message_id>``: The message's ID to convert into a codeblock.
 * ``[language]``: The language of the codeblock. If none is provided, it defaults to python.
-* ``[escape_markdown]``: Determines whether to escape the ``<message_id>``. If none is provided, it defaults to False.
 
-----------------------
-Additional Information
-----------------------
+.. _codify-command-codify-fromtext:
 
-This cog has been vetted by the Red-DiscordBot QA team as approved.
-For inquiries, see to the contact options below.
+^^^^^^^^^^^^^^^
+codify fromtext
+^^^^^^^^^^^^^^^
+
+**Syntax**
+
+.. code-block:: ini
+
+    [p]codify [language=python] <text>
+
+**Description**
+
+Get a message and wrap it in a codeblock.
+
+**Arguments**
+
+* ``[language]``: The language of the codeblock. If none is provided, it defaults to python.
+* ``<text>``: The text to put inside of the codeblock.
 
 ---------------
 Receive Support

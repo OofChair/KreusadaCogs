@@ -1,4 +1,4 @@
-.. image:: /.github/resources/kreusadacogs-artwork.png
+.. image:: /.github/resources/kreusadacogs-artwork2.png
 
 ===================================================
 Redbot cogs for Red-DiscordBot authored by Kreusada
@@ -6,17 +6,15 @@ Redbot cogs for Red-DiscordBot authored by Kreusada
 
 This is my repository for Red Discord-Bot. I built these cogs because these were the features that I wanted for my bot, `WALL-E. <https://discord.com/oauth2/authorize?client_id=766580519000473640&scope=bot&permissions=8>`_
 
-These cogs have been approved by the Red-DiscordBot QA team.
-
 ------------
 Installation
 ------------
 
-Primarily, make sure you have `downloader` loaded. 
+Primarily, make sure you have `downloader` loaded.
 
 .. code-block:: ini
 
-    [p]load Downloader
+    [p]load downloader
 
 Next, let's add my repository to your system.
 
@@ -34,43 +32,63 @@ To install a cog, use this command, replacing <cog> with the name of the cog you
 Available cogs list
 -------------------
 
-+-----------------+--------------------------------------------------------------+---------+----------+
-| Cog Name        | Description                                                  | Tags    | Author   |
-+=================+==============================================================+=========+==========+
-| advanceduptime  | Uptime but with additional statistics and inside an embed.   | Tools   | Kreusada |
-+-----------------+--------------------------------------------------------------+---------+----------+
-| alphanato       | Get NATO phonetics through given letters.                    | Tools   | Kreusada |
-+-----------------+--------------------------------------------------------------+---------+----------+
-| blackformatter  | Style your code with the black formatter.                    | Tools   | Kreusada |
-+-----------------+--------------------------------------------------------------+---------+----------+
-| bubblewrap      | Get some bubblewrap.                                         | Fun     | Kreusada |
-+-----------------+--------------------------------------------------------------+---------+----------+
-| codify          | Get messages and transform them into code blocks.            | Tools   | Kreusada |
-+-----------------+--------------------------------------------------------------+---------+----------+
-| dehoister       | Dehoist new users with a variety of powerful tools.          | Mod     | Kreusada |
-+-----------------+--------------------------------------------------------------+---------+----------+
-| minifier        | Minify your code with the python minifier.                   | Tools   | Kreusada |
-+-----------------+--------------------------------------------------------------+---------+----------+
-| namegenerator   | Generate random names will optional gender arguments.        | Fun     | Kreusada |
-+-----------------+--------------------------------------------------------------+---------+----------+
-| pinginvoke      | r2d2? wall-e? Invoke ping by asking if your bot's there.     | Tools   | Kreusada |
-+-----------------+--------------------------------------------------------------+---------+----------+
-| pingoverride    | Replace "Pong." with your own response!                      | Tools   | Kreusada |
-+-----------------+--------------------------------------------------------------+---------+----------+
-| ram             | Get your bot's random access memory.                         | Tools   | Kreusada |
-+-----------------+--------------------------------------------------------------+---------+----------+
-| sendcards       | Send christmas, birthday, valentines and get well soon cards | Fun     | Kreusada |
-+-----------------+--------------------------------------------------------------+---------+----------+
-| staff           | Alert staff for   conspicuous activity.                      | Mod     | Kreusada |
-+-----------------+--------------------------------------------------------------+---------+----------+
-| textmanipulator | Manipulate text and words with tools.                        | Tools   | Kreusada |
-+-----------------+--------------------------------------------------------------+---------+----------+
-| timestables     | Learn your times tables with an 'against the clock' game.    | Fun     | Kreusada |
-+-----------------+--------------------------------------------------------------+---------+----------+
-| vinfo           | Obtain version info for third-party cogs and dependencies.   | Fun     | Kreusada |
-+-----------------+--------------------------------------------------------------+---------+----------+
-| votechannel     | Designate a channel to add voting reactions (customizable).  | Tools   | Kreusada |
-+-----------------+--------------------------------------------------------------+---------+----------+
++-----------------+--------------------------------------------------------------+---------+----------------+
+| Cog Name        | Description                                                  | Tags    | Author(s)      |
++=================+==============================================================+=========+================+
+| advanceduptime  | Uptime but with additional statistics and inside an embed.   | Tools   | Kreusada       |
++-----------------+--------------------------------------------------------------+---------+----------------+
+| alphanato       | Get NATO phonetics through given letters.                    | Tools   | Kreusada       |
++-----------------+--------------------------------------------------------------+---------+----------------+
+| blackformatter  | Style your code with the black formatter.                    | Tools   | Kreusada       |
++-----------------+--------------------------------------------------------------+---------+----------------+
+| bubblewrap      | Get some bubblewrap.                                         | Fun     | Kreusada       |
++-----------------+--------------------------------------------------------------+---------+----------------+
+| codify          | Get messages and transform them into code blocks.            | Tools   | Kreusada       |
++-----------------+--------------------------------------------------------------+---------+----------------+
+| cogpaths        | Get various paths for a cog.                                 | Tools   | Kreusada       |
++-----------------+--------------------------------------------------------------+---------+----------------+
+| consoleclearer  | Completely clear your Red console.                           | Tools   | Kreusada       |
++-----------------+--------------------------------------------------------------+---------+----------------+
+| dehoister       | Dehoist new users with a variety of powerful tools.          | Mod     | Kreusada       |
++-----------------+--------------------------------------------------------------+---------+----------------+
+| encryptor       | Generate and validify the strength of passwords.             | Tools   | Kreusada       |
++-----------------+--------------------------------------------------------------+---------+----------------+
+| flags           | Get the flag for a country.                                  | Tools   | Kreusada       |
++-----------------+--------------------------------------------------------------+---------+----------------+
+| minifier        | Minify your code with the python minifier.                   | Tools   | Kreusada       |
++-----------------+--------------------------------------------------------------+---------+----------------+
+| mjolnir         | Try to lift Thor's hammer!                                   | Fun     | Jojo, Kreusada |
++-----------------+--------------------------------------------------------------+---------+----------------+
+| namegenerator   | Generate random names will optional gender arguments.        | Fun     | Kreusada       |
++-----------------+--------------------------------------------------------------+---------+----------------+
+| pinginvoke      | r2d2? wall-e? Invoke ping by asking if your bot's there.     | Tools   | Kreusada       |
++-----------------+--------------------------------------------------------------+---------+----------------+
+| pingoverride    | Replace "Pong." with your own response!                      | Tools   | Kreusada       |
++-----------------+--------------------------------------------------------------+---------+----------------+
+| quotes          | Get a random quote.                                          | Fun     | Kreusada       |
++-----------------+--------------------------------------------------------------+---------+----------------+
+| raffle          | Create raffles for your guild.                               | Fun     | Kreusada       |
++-----------------+--------------------------------------------------------------+---------+----------------+
+| ram             | Get your bot's random access memory.                         | Tools   | Kreusada       |
++-----------------+--------------------------------------------------------------+---------+----------------+
+| rpsls           | Rock, paper, scissors, lizard, spock.                        | Fun     | Kreusada       |
++-----------------+--------------------------------------------------------------+---------+----------------+
+| sendcards       | Send christmas, birthday, valentines and get well soon cards | Fun     | Kreusada       |
++-----------------+--------------------------------------------------------------+---------+----------------+
+| staff           | Alert staff for   conspicuous activity.                      | Mod     | Kreusada       |
++-----------------+--------------------------------------------------------------+---------+----------------+
+| termino         | Custom shutdown/restart responses with predicates.           | Tools   | Kreusada       |
++-----------------+--------------------------------------------------------------+---------+----------------+
+| texteditor      | Edit and manipulate with text.                               | Tools   | Kreusada       |
++-----------------+--------------------------------------------------------------+---------+----------------+
+| timestables     | Learn your times tables with an 'against the clock' game.    | Fun     | Kreusada       |
++-----------------+--------------------------------------------------------------+---------+----------------+
+| vinfo           | Obtain version info for third-party cogs and dependencies.   | Tools   | Kreusada       |
++-----------------+--------------------------------------------------------------+---------+----------------+
+| votechannel     | Designate a channel to add voting reactions (customizable).  | Tools   | Kreusada       |
++-----------------+--------------------------------------------------------------+---------+----------------+
+| yamlscanner     | An easy and quick tool to validate yaml.                     | Tools   | Kreusada       |
++-----------------+--------------------------------------------------------------+---------+----------------+
 
 ------------
 Contributing
@@ -92,39 +110,13 @@ Credits
 
 * Everyone who has helped from Red! <3
 * Special thanks to Jojo for kickstarting me with python.
-
-----------------
-Project Workflow
-----------------
-
-I like to add my issues and PRs to my project named 'Workflow',
-it helps to keep track of everything I need to get through.
-
-There are four sections:
-
-* To do
-* In progress
-* Done
-* Rejected/Infeasible
-
-If your issue/PR is in the ``To do`` section, that means that I haven't
-started looking at it. 
-
-If your issue/PR is in the ``In progress`` section, that means that I have started to 
-outline, test or develop the requested changes.
-
-If your issue/PR is in the ``Done`` section, that means the requested changes have been implemented or merged!
-
-If your issue/PR is in the ``Rejected/Infeasible`` section, that means I am not making changes.
-
-Please avoid elaborating profusely on original issues/PRs with outlined changes. I would much prefer
-it that you opened a new issue/PR with the changes you'd like.
+* Thanks Jackenmen for some awesome work on this repo's workflows and pre-commit stuff <3
 
 -------
 LICENSE
 -------
 
-This repository and its cogs are registered under the MIT License.
+This repository and its cogs are protected under the MIT License.
 
 For further information, please click `here <https://github.com/kreusada/Kreusada-Cogs/blob/master/LICENSE>`_
 

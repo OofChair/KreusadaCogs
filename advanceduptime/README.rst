@@ -15,7 +15,7 @@ Installation
 
 Let's firstly add my repository if you haven't already:
 
-* :code:`[p]repo add Kreusada https://github.com/Kreusada/Kreusada-Cogs`
+* :code:`[p]repo add kreusada https://github.com/Kreusada/Kreusada-Cogs`
 
 Next, let's download the cog from the repo:
 
@@ -56,19 +56,12 @@ uptime
 Shows your bot's uptime and additional stats.
 
 You might be wondering, how are you able to use a new uptime command if one already exists in core?
-This cog will replace the core uptime command, and then will add the core uptime command back 
+This cog will replace the core uptime command, and then will add the core uptime command back
 if the :code:`AdvancedUptime` cog is unloaded/uninstalled.
 
 This command's output will provide information on your bot's uptime, your bot's name,
 your bot's owner (you), the current discord guild, the number of guilds the bot is present in,
 the number of unique users your bot has, and the number of commands available!
-
-----------------------
-Additional Information
-----------------------
-
-This cog has been vetted by the Red-DiscordBot QA team as approved.
-For inquiries, see to the contact options below.
 
 ---------------
 Receive Support

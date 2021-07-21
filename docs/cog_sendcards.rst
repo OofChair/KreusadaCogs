@@ -55,7 +55,7 @@ send
 
 Commands with sendcards.
 
-.. warning:: 
+.. warning::
 
     When the birthday card is sent, we already add the recipients in the card for you.
     Please consider this to improve your card sending and to avoid repetition.
@@ -149,13 +149,6 @@ Send someone a valentine card.
 
 * ``<user_id>``: The ID of the user to send this card to.
 * ``<message>``: The message you want to send to the user.
-
-----------------------
-Additional Information
-----------------------
-
-This cog has been vetted by the Red-DiscordBot QA team as approved.
-For inquiries, see to the contact options below.
 
 ---------------
 Receive Support

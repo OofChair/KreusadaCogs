@@ -1,47 +1,30 @@
 import asyncio
+import contextlib
+import datetime
+import importlib
 import json
 import logging
+import pathlib
+import subprocess
 import sys
 import types
-from distutils import sysconfig
-from importlib import machinery
-from pathlib import Path
 
 import discord
 import lavalink
 import pip
 import redbot
 from redbot.core import commands
-from redbot.core.utils.chat_formatting import bold, box
-from redbot.core.utils.predicates import MessagePredicate
+from redbot.core.utils.chat_formatting import box
 from stdlib_list import stdlib_list
 
 log = logging.getLogger("red.kreusada.vinfo")
+attrs = ["__version__", "version_info", "_version_", "version"]
 
-base = "{}: {}\n{}: {}.{}.{}\n{}: {}\n\n{}: {}\n{}: {}"
+with open(pathlib.Path(__file__).parent / "info.json") as fp:
+    __red_end_user_data_statement__ = json.load(fp)["end_user_data_statement"]
 
 
-REDBOT_CORE_COGS = [
-    "Admin",
-    "Alias",
-    "Audio",
-    "Bank",
-    "Cleanup",
-    "CustomCom",
-    "Downloader",
-    "Economy",
-    "Filter",
-    "General",
-    "Image",
-    "Mod",
-    "ModLog",
-    "Mutes",
-    "Permissions",
-    "Reports",
-    "Streams",
-    "Trivia",
-    "Warnings",
-]
+checkattr = lambda x, y: isinstance(getattr(x, y), (str, int, float, list, tuple))
 
 
 class Vinfo(commands.Cog):
@@ -49,10 +32,8 @@ class Vinfo(commands.Cog):
     Get versions of 3rd party cogs, and modules.
     """
 
-    __author__ = [
-        "Kreusada",
-    ]
-    __version__ = "1.3.0"
+    __author__ = ["Kreusada"]
+    __version__ = "2.0.4"
 
     def __init__(self, bot):
         self.bot = bot
@@ -66,62 +47,27 @@ class Vinfo(commands.Cog):
         """Nothing to delete"""
         return
 
-    @staticmethod
-    def check_isinstance(module: types.ModuleType, attr: str):
-        return isinstance(getattr(module, attr), (str, int, list, tuple))
+    def cog_unload(self):
+        with contextlib.suppress(Exception):
+            self.bot.remove_dev_env_value("vinfo")
 
-    def check_attrs(self, module: types.ModuleType):
-        pypath = str(sysconfig.get_python_lib(standard_lib=True))
-        builtin = [sys.version_info[:3], "(Core/Builtin Python)"]
-        if module.__name__ == 'sys':
-            return builtin
-        with open(Path(__file__).parent / "attrs.json") as fp:
-            attrs_to_check = json.load(fp)["attrs"]
-        for attr in attrs_to_check:
-            if hasattr(module, attr) and self.check_isinstance(module, attr):
-                return [getattr(module, attr), "." + attr]
-        if module.__name__ in stdlib_list("3.8"):
-            # Will bump on Red python bump, eventually
-            return builtin
-        # The following statements were here before i discovered the stdlib_list lib.
-        # TODO: I should probably remove them soon, but they have no harm in being here for now.
-        if hasattr(module, '__file__'):
-            file = module.__file__.lower()
-            if file.startswith(pypath.lower()):
-                return builtin
-        if hasattr(module, '__spec__'):
-            if isinstance(module.__spec__, machinery.ModuleSpec):
-                if hasattr(module.__spec__, 'origin') and module.__spec__.origin:
-                    spec = module.__spec__.origin
-                    if spec.lower().startswith(pypath.lower()):
-                        return builtin
-                    if spec.lower() == "built-in":
-                        return builtin
-        if hasattr(module, '__path__'):
-            path = module.__path__[0].lower()
-            if path.startswith(pypath.lower()):
-                return builtin
-        return None
+    async def initialize(self) -> None:
+        if 719988449867989142 in self.bot.owner_ids:
+            with contextlib.suppress(Exception):
+                self.bot.add_dev_env_value("vinfo", lambda x: self)
 
     @staticmethod
-    def modvinfo_format(mods):
-        formatter = (
-            bold("Red"),
-            redbot.version_info,
-            bold("Python (sys)"),
-            *sys.version_info[:3],
-            bold("discord.py"),
-            discord.__version__,
-            bold("PIP"),
-            pip.__version__,
-            bold("Lavalink"),
-            lavalink.__version__,
-        )
-        description = mods.format(*formatter)
-        return discord.Embed(
-            title="Common Modules",
-            description=description,
-        )
+    def isdev():
+        return "--dev" in sys.argv
+
+    @staticmethod
+    def check_attrs(module: types.ModuleType):
+        builtin = [sys.version_info[:3], None]
+        for attr in attrs:
+            if hasattr(module, attr) and checkattr(module, attr):
+                return [getattr(module, attr), attr]
+        if module.__name__ in stdlib_list(".".join([str(x) for x in sys.version_info[:2]])):
+            return builtin
 
     # Commands
 
@@ -138,84 +84,198 @@ class Vinfo(commands.Cog):
         The cog must be loaded, and provided in the correct casing.
         """
         await ctx.trigger_typing()
-        
-        if cog not in self.bot.cogs:
-            return await ctx.send(box(f"- Could not find a cog matching `{cog}`.", lang='diff'))
 
-        Cog = self.bot.get_cog(cog)
+        embed = discord.Embed(
+            title=f"Version Information on {cog}",
+            color=await ctx.embed_colour(),
+            timestamp=datetime.datetime.now(),
+        )
 
-        # Note that cogs won't have a `version_info` attr unlike some modules, so
-        # we'll skip finding that attr because it will return False 99% of the time.
+        cog_obj = self.bot.get_cog(cog)
+        dev_field_value = None
 
-        if hasattr(Cog, "__version__"):
-            return await ctx.send(box(f"{cog} version: {getattr(Cog, '__version__')}", lang='yaml'))
-        elif cog in REDBOT_CORE_COGS:
-            return await ctx.send(
-                box(
-                    "Builtin Red cogs do not have version attributes by default.\n"
-                    "Perhaps you're looking for your Red version, which would be {}.".format(redbot.version_info), 
-                    lang="yaml"
-                )
+        if not cog_obj:
+            version_info_field_value = box(
+                f"- Could not find a cog matching `{cog}`.", lang="diff"
             )
+            if self.isdev():
+                dev_field_value = box(
+                    f"{getattr.__name__}(bot.get_cog('{cog}'), '__version__')\n"
+                    ">>> AttributeError: 'NoneType' object has no attribute '__version__'",
+                    lang="py",
+                )
         else:
-            await ctx.send(box(f"- Could not find a version for {cog}.", lang='diff'))
+            _getattr = getattr(cog_obj, "__version__", None)
+            if _getattr is not None:
+                version_info_field_value = box(
+                    f"{_getattr} ({type(_getattr).__name__})", lang="py"
+                )
+                if self.isdev():
+                    dev_field_value = box(
+                        f"{getattr.__name__}(bot.get_cog('{cog}'), '__version__')\n"
+                        f">>> '{_getattr}'",
+                        lang="py",
+                    )
+            else:
+                version_info_field_value = box(
+                    f"- Could not find a version for {cog}.", lang="diff"
+                )
+
+        embed.add_field(name="Version Information", value=version_info_field_value, inline=False)
+        if dev_field_value is not None:
+            embed.add_field(name="Quick Debug", value=dev_field_value, inline=False)
+        await ctx.send(embed=embed)
 
     @vinfo.command(aliases=["module", "dep", "dependency"], usage="<module or dependency>")
-    @commands.bot_has_permissions(embed_links=True)
     async def mod(self, ctx, module: str = None):
         """Get module versions."""
-        
+        common_modules = f"""
+        **Red:** {redbot.version_info}
+        **Python (sys):** {'.'.join([str(x) for x in sys.version_info[:3]])}
+        **discord.py:** {discord.__version__}
+
+        **pip:** {pip.__version__}
+        **Git:** {subprocess.check_output(["git", "--version"]).decode("utf-8").split()[2]}
+
+        **Lavalink:** {lavalink.__version__}
+        """
         if not module:
-            embed = self.modvinfo_format(base)
-            embed.color = await ctx.embed_colour()
-            embed.set_footer(
-                text="Find a specific module version by adding the module argument."
+            audio = self.bot.get_cog("Audio")
+            java = (
+                (audio.player_manager.jvm or "Unknown")
+                if audio and audio.player_manager
+                else "Unknown"
             )
+            lavaplayer = (
+                (audio.player_manager.lavaplayer or "Unknown")
+                if audio and audio.player_manager
+                else "Unknown"
+            )
+            build = (
+                (audio.player_manager.ll_build or "Unknown")
+                if audio and audio.player_manager
+                else "Unknown"
+            )
+
+            extras = (
+                "**Java:** {java}\n**Lavalink Build:** {build}\n**Lavaplayer:** {lp}\n"
+            ).format(build=build, java=java, lp=lavaplayer)
+
+            module_data = common_modules + extras
+
+            embed = discord.Embed(
+                title="Common Modules", description=module_data, color=await ctx.embed_colour()
+            )
+            embed.set_footer(text="Find a specific module version by adding the module argument.")
             await ctx.send(embed=embed)
             return await ctx.send_help()
 
         await ctx.trigger_typing()
 
+        embed = discord.Embed(
+            color=await ctx.embed_colour(),
+            timestamp=datetime.datetime.now(),
+        )
         try:
-            MOD = __import__(module)
-        except ModuleNotFoundError:
-            none_found = "- You do not have an installed module named `{}`.".format(module)
-            pipinstall = await ctx.send(box(none_found + "\n--- Would you like to pip install it? (yes/no)", lang="diff"))
-            try:
-                pred = MessagePredicate.yes_or_no(ctx, user=ctx.author)
-                msg = await ctx.bot.wait_for("message", check=pred, timeout=20)
-            except asyncio.TimeoutError:
-                return await pipinstall.edit(content=box(none_found, lang="diff"))
-            if pred.result:
-                return await ctx.invoke(self.bot.get_command("pipinstall"), module)
+            MOD = importlib.import_module(module)
+        except Exception as e:
+            if isinstance(e, OSError):
+                value = box(
+                    "- An operating system error occured whilst trying to "
+                    "retrieve version information for this module.",
+                    lang="diff",
+                )
             else:
-                return await pipinstall.edit(content=box(none_found, lang="diff"))
+                value = box("- " + str(e), lang="diff")
+
+            embed.title = f"Information on {module.upper()}"
+            embed.add_field(name="Version Information", value=value)
+
+            if self.isdev():
+                embed.add_field(
+                    name="Quick Debug",
+                    value=box(
+                        f"{__import__.__name__}('{module}')\n>>> {e.__class__.__name__}: {e}",
+                        lang="py",
+                    ),
+                    inline=False,
+                )
+            await ctx.send(embed=embed)
+            return
 
         check_attrs = self.check_attrs(MOD)
+        embed.title = f"Version Information on {MOD.__name__.upper()}"
 
         if not check_attrs:
-            return await ctx.send(
-                box("# Could not find a version for `{}`.", lang="cs").format(MOD.__name__)
+            embed.add_field(
+                name="Version Information",
+                value=box("# Could not find a version for `{}`.", lang="cs").format(MOD.__name__),
             )
+            embed.add_field(
+                name="Attributes Checked",
+                value=box("\n".join(f"- {v}" for v in attrs), lang="diff"),
+                inline=False,
+            )
+            await ctx.send(embed=embed)
+            return
 
-        vinfo = check_attrs
+        attr = f"`{MOD.__name__}.{check_attrs[1]}`"
 
-        if isinstance(vinfo[0], tuple) and vinfo[1] == "(Core/Builtin Python)":
-            value = ("{}." * len(vinfo[0])).strip('.').format(*vinfo[0])
-            attr = f"None {vinfo[1]}"
-        
-        elif isinstance(vinfo[0], (list, tuple)):
-            value = ("{}." * len(vinfo[0])).strip('.').format(*vinfo[0])
-            attr = f"`{MOD.__name__}{vinfo[1]}`"
+        if isinstance(check_attrs[0], tuple) and check_attrs[1] is None:
+            value = ("{}." * len(check_attrs[0])).strip(".").format(*check_attrs[0])
+            attr = None
+
+        elif isinstance(check_attrs[0], (list, tuple)):
+            value = ("{}." * len(check_attrs[0])).strip(".").format(*check_attrs[0])
+
+        elif isinstance(check_attrs[0], float):
+            value = str(check_attrs[0])
 
         else:
-            value = vinfo[0]
-            attr = f"`{MOD.__name__}{vinfo[1]}`"
+            value = check_attrs[0]
 
-
-        await ctx.send(
-            box(
-                f"Attribute: {attr}\nFound version info for [{module}]: {value}",
-                lang="yaml",
-            )
+        embed.add_field(
+            name="Version Information",
+            value=box(
+                text=f"Attribute: {attr}\nFound version info for [{module}]: {value}", lang="yaml"
+            ),
+            inline=False,
         )
+
+        if check_attrs[1] is not None:
+            reasons = []
+            for v in attrs[: attrs.index(check_attrs[1])]:
+                _getattr = getattr(MOD, v, None)
+                if _getattr is None:
+                    reasons.append(f"{v}\n\t| This attribute was not found.")
+                else:
+                    if not checkattr(MOD, v):
+                        reasons.append(f"{v}\n\t| This attribute was an unsupported type.")
+                    else:
+                        # This *should* never happen
+                        reasons.append(
+                            f"{v}\n\t| This attribute failed for an unknown reason, consider reporting this."
+                        )
+
+            embed.add_field(
+                name="Attributes Checked",
+                value=box(
+                    "\n".join(f"- {v}" for v in reasons)
+                    + f"\n+ {check_attrs[1]}\n\t| Found attribute for {MOD.__name__}!",
+                    lang="diff",
+                ),
+                inline=False,
+            )
+        if attr is not None:
+            debug = box(
+                text=f"{getattr.__name__}({__import__.__name__}('{MOD.__name__}'), '{check_attrs[1]}')\n>>> {value}",
+                lang="py",
+            )
+            if self.isdev():
+                embed.add_field(name="Quick Debug", value=debug, inline=False)
+        else:
+            embed.description = (
+                "This library does not have it's own version attribute, "
+                f"so it will follow python's version, which is {value}."
+            )
+        await ctx.send(embed=embed)

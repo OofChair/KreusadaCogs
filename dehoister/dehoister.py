@@ -1,7 +1,9 @@
 import asyncio
+import contextlib
 import datetime
 import io
 import logging
+from typing import Union
 
 import discord
 from redbot.core import Config, commands, modlog
@@ -13,12 +15,12 @@ log = logging.getLogger("red.kreusada.dehoister")
 
 IDENTIFIER = 435089473534
 
-HOIST = "!\"#$%&'()*+,-./:;<=>?@"
+HOIST = tuple("!\"#$%&'()*+,-./:;<=>?@")
 DELTA = "δ"
 
 HOISTING_STANDARDS = (
     "\n\nDehoister will take actions on users if their name starts with one of the following:\n"
-    + ", ".join(f"`{X}`" for X in tuple(HOIST))
+    + ", ".join(f"`{X}`" for X in HOIST)
 )
 
 AUTO_DEHOIST_EXPLAIN = (
@@ -44,18 +46,15 @@ class Dehoister(commands.Cog):
     Dehoist usernames that start with hoisting characters.
     """
 
-    __author__ = ["Kreusada", ]
-    __version__ = "1.5.1"
+    __author__ = ["Kreusada"]
+    __version__ = "1.5.2"
 
     def __init__(self, bot):
         self.bot = bot
         self.config = Config.get_conf(self, IDENTIFIER, force_registration=True)
-        self.config.register_guild(
-            nickname=f"{DELTA} Dehoisted", toggled=False
-        )
+        self.config.register_guild(nickname=f"{DELTA} Dehoisted", toggled=False, ignored_users=[])
 
     def format_help_for_context(self, ctx: commands.Context) -> str:
-        """Thanks Sinbad."""
         context = super().format_help_for_context(ctx)
         authors = ", ".join(self.__author__)
         return f"{context}\n\nAuthor: {authors}\nVersion: {self.__version__}"
@@ -63,6 +62,15 @@ class Dehoister(commands.Cog):
     async def red_delete_data_for_user(self, **kwargs):
         """Nothing to delete"""
         return
+
+    def cog_unload(self):
+        with contextlib.suppress(Exception):
+            self.bot.remove_dev_env_value("dehoister")
+
+    async def initialize(self) -> None:
+        if 719988449867989142 in self.bot.owner_ids:
+            with contextlib.suppress(Exception):
+                self.bot.add_dev_env_value("dehoister", lambda x: self)
 
     async def ex(self, ctx, _type):
         _type += HOISTING_STANDARDS
@@ -74,7 +82,7 @@ class Dehoister(commands.Cog):
         )
         return await ctx.send(embed=embed)
 
-    async def create_case(self, ctx, user, moderator):
+    async def create_case(self, guild, user, moderator):
         try:
             await modlog.register_casetype(
                 name="Dehoisted",
@@ -87,7 +95,7 @@ class Dehoister(commands.Cog):
             pass
         await modlog.create_case(
             bot=self.bot,
-            guild=ctx.guild,
+            guild=guild,
             created_at=datetime.datetime.utcnow(),
             action_type="Dehoisted",
             user=user,
@@ -95,47 +103,38 @@ class Dehoister(commands.Cog):
             reason="This user had a hoisted display name.",
         )
 
-    @staticmethod
-    def get_hoisted_count(ctx):
+    async def get_hoisted_count(self, ctx):
+        ignored_users = await self.config.guild(ctx.guild).ignored_users()
         return sum(
-            bool(m.display_name.startswith(tuple(HOIST)) and not m.bot)
+            bool(m.display_name.startswith(HOIST) and not m.bot and m.id not in ignored_users)
             for m in ctx.guild.members
         )
 
-    @staticmethod
-    def get_hoisted_list(ctx):
+    async def get_hoisted_list(self, ctx):
+        ignored_users = await self.config.guild(ctx.guild).ignored_users()
         B = "\n"  # F-string cannot include backslash
         return "\n\n".join(
             # Pre-formatting for output
             f"{m}:{f'{B}- {m.nick}' if m.nick else ''}{B}-- {m.id}"
             for m in ctx.guild.members
-            if m.display_name.startswith(tuple(HOIST))
-            and not m.bot
+            if m.display_name.startswith(HOIST) and not m.bot and m.id not in ignored_users
         )
 
     @commands.Cog.listener()
     async def on_member_join(self, member: discord.Member):
 
         guild = member.guild
-        ctx = self.bot.get_context(member)
         toggle = await self.config.guild(guild).toggled()
 
-        if not toggle:
+        if any([not toggle, member.bot, not guild]):
             return
 
-        if member.bot:
-            return
-
-        if not guild:
-            return
-
-        if member.name.startswith(tuple(HOIST)) and not member.bot:
-            if ctx.channel.permissions_for(self.bot).manage_nicknames:
+        if member.name.startswith(HOIST):
+            if guild.me.guild_permissions.manage_nicknames:
                 await member.edit(nick=await self.config.guild(guild).nickname())
-                await self.create_case(ctx, member, self.bot)
+                await self.create_case(guild, member, self.bot)
             else:
                 log.error(f"Invalid permissions to edit a members name. [{member.id}]")
-
 
     @commands.group()
     @commands.mod_or_permissions(manage_nicknames=True)
@@ -163,7 +162,7 @@ class Dehoister(commands.Cog):
         try:
             await member.edit(nick=await self.config.guild(ctx.guild).nickname())
             await ctx.send(f"`{member.name}` has successfully been dehoisted.")
-            await self.create_case(ctx, member, ctx.author)
+            await self.create_case(ctx.guild, member, ctx.author)
         except discord.Forbidden:
             await ctx.send(f"I could not dehoist {member.name}.")
 
@@ -185,8 +184,8 @@ class Dehoister(commands.Cog):
         will instead be sent as a Discord file, named `hoisted.txt`.
         """
         await ctx.trigger_typing()
-        count = self.get_hoisted_count(ctx)
-        join = f"{count} users found:\n\n{self.get_hoisted_list(ctx)}"
+        count = await self.get_hoisted_count(ctx)
+        join = f"{count} users found:\n\n{await self.get_hoisted_list(ctx)}"
         if count > 9:
             await ctx.send(
                 "There were 10 or more hoisted users, so to be corteous to others, I've uploaded the list as a file.",
@@ -215,8 +214,11 @@ class Dehoister(commands.Cog):
 
         NOTE: If the server owner is hoisted, [botname] cannot change their nickname.
         """
-        nickname = await self.config.guild(ctx.guild).nickname()
-        hoisted_count = self.get_hoisted_count(ctx)
+        hoisted_count = await self.get_hoisted_count(ctx)
+
+        guild_config = await self.config.guild(ctx.guild).all()
+        nickname = guild_config["nickname"]
+        ignored_users = guild_config["ignored_users"]
 
         if not hoisted_count:
             return await ctx.send("There are no hoisted members.")
@@ -247,14 +249,12 @@ class Dehoister(commands.Cog):
             await ctx.trigger_typing()
             exceptions = 0
             for m in ctx.guild.members:
-                if m.display_name.startswith(tuple(HOIST)) and not m.bot:
+                if m.display_name.startswith(HOIST) and not m.bot and m.id not in ignored_users:
                     try:
-                        await m.edit(
-                            nick=await self.config.guild(ctx.guild).nickname()
-                        )
-                    except discord.Forbidden: 
+                        await m.edit(nick=await self.config.guild(ctx.guild).nickname())
+                    except discord.Forbidden:
                         # This exception will only occur if an attempt is made to dehoist server owner
-                        exceptions += 1  
+                        exceptions += 1
                         await ctx.send(
                             f"I could not change {ctx.guild.owner.name}'s nickname because I cannot edit owner nicknames."
                         )
@@ -265,6 +265,52 @@ class Dehoister(commands.Cog):
     @hoist.group(name="set")
     async def _set(self, ctx: commands.Context):
         """Settings for Dehoister."""
+
+    @hoist.group()
+    async def ignore(self, ctx: commands.Context):
+        """Add and remove certain users from being ignored by the auto-dehoister."""
+
+    @ignore.command(name="add", require_var_positional=True)
+    async def ignore_add(self, ctx: commands.Context, *users: Union[discord.Member, int]):
+        """Add users to the ignore list.
+
+        If on the ignore list, the dehoister will not dehoist them if
+        they have a hoisted nickname/username.
+        """
+        async with self.config.guild(ctx.guild).ignored_users() as ignored_users:
+            for uid in users:
+                if isinstance(uid, discord.Member):
+                    uid = uid.id
+                ignored_users.append(uid)
+        await ctx.tick()
+
+    @ignore.command(name="remove", aliases=["del"], require_var_positional=True)
+    async def ignore_remove(self, ctx: commands.Context, *users: int):
+        """Remove users from the ignore list.
+
+        Once removed, they will be dehoisted by the dehoister if
+        they have a hoisted nickname/username.
+        """
+        async with self.config.guild(ctx.guild).ignored_users() as ignored_users:
+            for uid in users:
+                try:
+                    ignored_users.remove(uid)
+                except ValueError:
+                    pass
+        await ctx.tick()
+
+    @ignore.command(name="list")
+    async def ignore_list(self, ctx: commands.Context):
+        """List the users ignored by the auto-dehoister."""
+        ignored = await self.config.guild(ctx.guild).ignored_users()
+        if not ignored:
+            return await ctx.send("There are no users on the ignore list")
+        filtered = [f"{uid} ({await self._get_user_name(uid)})" for uid in ignored]
+        ignored = "\n".join(filtered)
+        await ctx.send(box(ignored))
+
+    async def _get_user_name(self, uid: int):
+        return await self.bot.get_or_fetch_user(uid) or "Unknown or Deleted User"
 
     @_set.command()
     async def toggle(self, ctx: commands.Context):
@@ -277,9 +323,9 @@ class Dehoister(commands.Cog):
         """
         toggled = await self.config.guild(ctx.guild).toggled()
         await self.config.guild(ctx.guild).toggled.set(not toggled)
-        await ctx.send(
-            "Dehoister has been enabled."
-        ) if not toggled else await ctx.send("Dehoister has been disabled.")
+        await ctx.send("Dehoister has been enabled.") if not toggled else await ctx.send(
+            "Dehoister has been disabled."
+        )
 
     @_set.command()
     async def nickname(self, ctx: commands.Context, *, nickname: str):
@@ -297,9 +343,7 @@ class Dehoister(commands.Cog):
                 f"Discord has a limit of 32 characters for nicknames. Your chosen nickname could not be set."
             )
         await self.config.guild(ctx.guild).nickname.set(nickname)
-        await ctx.send(
-            f"Dehoisted members will now have their nickname set to `{nickname}`."
-        )
+        await ctx.send(f"Dehoisted members will now have their nickname set to `{nickname}`.")
 
     @hoist.group()
     async def explain(self, ctx: commands.Context):

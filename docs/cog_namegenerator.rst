@@ -75,7 +75,7 @@ Generates a random first name.
 
 * ``[gender]``: The gender for the name. If none is specified, it defaults to random.
 
-.. _namegenerator-command-name-first:
+.. _namegenerator-command-name-full:
 
 """""""""
 name full
@@ -125,24 +125,16 @@ name mash
 
 .. code-block:: ini
 
-    [p]name mash <member1> <member2> [use_nicks=False]
+    [p]name mash <word1> <word2>
 
 **Description**
 
-Mashes two usernames together.
+Mashes two words together.
 
 **Arguments**
 
-* ``<member1>``: The first user to mash.
-* ``<member2>``: The second user to mash.
-* ``[use_nicks]``: Whether nicks are used instead. Defaults to False.
-
-----------------------
-Additional Information
-----------------------
-
-This cog has been vetted by the Red-DiscordBot QA team as approved.
-For inquiries, see to the contact options below.
+* ``<word1>``: The first word to mash.
+* ``<member2>``: The second word to mash.
 
 ---------------
 Receive Support

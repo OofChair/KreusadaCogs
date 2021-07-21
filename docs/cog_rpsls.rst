@@ -38,7 +38,7 @@ rpsls
 
 **Syntax**
 
-.. code-block:: none
+.. code-block:: ini
 
     [p]rpsls <choice>
 
@@ -51,13 +51,6 @@ Use ``[p]rpsls help`` for a diagram.
 **Arguments**
 
 * ``<choice>``: Your choice to play. Must be of rock, paper, scissors, lizard, or spock.
-
-----------------------
-Additional Information
-----------------------
-
-This cog has been vetted by the Red-DiscordBot QA team as approved.
-For inquiries, see to the contact options below.
 
 ---------------
 Receive Support
